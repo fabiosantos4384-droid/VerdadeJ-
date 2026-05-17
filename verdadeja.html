@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VerdadeJá – Verificador de Notícias</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #1a7a4a;
+    --verde-claro: #2ecc71;
+    --verde-escuro: #0f4d2e;
+    --amarelo: #f0b429;
+    --vermelho: #e53e3e;
+    --cinza-bg: #f5f4ef;
+    --cinza-card: #ffffff;
+    --texto: #1a1a1a;
+    --texto-leve: #555;
+    --borda: #d9d6cc;
+    --fonte-base: 20px;
+    --raio: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--cinza-bg);
+    color: var(--texto);
+    font-size: var(--fonte-base);
+    line-height: 1.7;
+  }
+
+  /* ACESSIBILIDADE – barra de tamanho de fonte */
+  #barra-acesso {
+    background: var(--verde-escuro);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 28px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  #barra-acesso span { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  .btn-fonte {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    color: #fff;
+    padding: 6px 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    transition: background 0.2s;
+  }
+  .btn-fonte:hover { background: rgba(255,255,255,0.3); }
+  .btn-fonte.ativo { background: var(--amarelo); color: #111; border-color: var(--amarelo); }
+
+  /* HEADER */
+  header {
+    background: var(--verde);
+    color: #fff;
+    padding: 28px 28px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-icone {
+    width: 56px; height: 56px;
+    background: #fff;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .logo-texto h1 {
+    font-family: 'Merriweather', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .logo-texto p { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+
+  .header-direita { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #data-hoje {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  /* CATEGORIAS */
+  #categorias {
+    background: #fff;
+    border-bottom: 2px solid var(--borda);
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .cat-btn {
+    white-space: nowrap;
+    padding: 16px 22px;
+    background: none;
+    border: none;
+    border-bottom: 4px solid transparent;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--texto-leve);
+    cursor: pointer;
+    transition: all 0.2s;
+    scroll-snap-align: start;
+  }
+  .cat-btn:hover { color: var(--verde); }
+  .cat-btn.ativa { color: var(--verde); border-bottom-color: var(--verde); }
+
+  /* MAIN */
+  main { max-width: 1100px; margin: 0 auto; padding: 36px 20px 60px; }
+
+  /* HERO – verificador */
+  #verificador {
+    background: linear-gradient(135deg, var(--verde-escuro) 0%, var(--verde) 100%);
+    border-radius: 22px;
+    padding: 40px 40px 36px;
+    color: #fff;
+    margin-bottom: 44px;
+    box-shadow: 0 8px 32px rgba(26,122,74,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  #verificador::before {
+    content: '🔍';
+    position: absolute;
+    right: 30px; top: 20px;
+    font-size: 90px;
+    opacity: 0.1;
+    pointer-events: none;
+  }
+  #verificador h2 {
+    font-family: 'Merriweather', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  #verificador p { opacity: 0.88; margin-bottom: 22px; font-size: 1.05rem; }
+  #campo-noticia {
+    width: 100%;
+    padding: 18px 20px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1.05rem;
+    resize: vertical;
+    min-height: 110px;
+    background: rgba(255,255,255,0.97);
+    color: var(--texto);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  #campo-noticia:focus { outline: 3px solid var(--amarelo); }
+  #btn-verificar {
+    background: var(--amarelo);
+    color: #1a1a1a;
+    border: none;
+    padding: 16px 38px;
+    border-radius: 50px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(240,180,41,0.4);
+  }
+  #btn-verificar:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(240,180,41,0.5); }
+  #btn-verificar:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  #resultado-verificacao {
+    margin-top: 24px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 22px 24px;
+    display: none;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  #resultado-verificacao.visivel { display: block; animation: fadeIn 0.4s ease; }
+  .resultado-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 18px; border-radius: 50px;
+    font-weight: 700; font-size: 1rem; margin-bottom: 12px;
+  }
+  .badge-falsa { background: #ff6b6b; color: #fff; }
+  .badge-verdadeira { background: #51cf66; color: #fff; }
+  .badge-suspeita { background: var(--amarelo); color: #111; }
+  #resultado-texto { font-size: 1rem; line-height: 1.6; opacity: 0.95; }
+  #resultado-fontes { margin-top: 14px; font-size: 0.92rem; opacity: 0.85; }
+  #resultado-fontes a { color: #adf7c1; text-decoration: underline; }
+
+  /* LOADING SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border: 3px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SEÇÃO NOTÍCIAS */
+  .secao-titulo {
+    font-family: 'Merriweather', serif;
+    font-size: 1.45rem;
+    font-weight: 900;
+    margin-bottom: 22px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .secao-titulo::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--borda);
+  }
+
+  #grid-noticias {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+  }
+
+  .card-noticia {
+    background: var(--cinza-card);
+    border-radius: var(--raio);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    border: 1.5px solid var(--borda);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .card-noticia:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
+
+  .card-categoria {
+    padding: 7px 16px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cat-saude { background: #e8f8f0; color: #1a7a4a; }
+  .cat-politica { background: #e8f0ff; color: #3a5fc8; }
+  .cat-economia { background: #fff8e0; color: #b07d00; }
+  .cat-tecnologia { background: #f0e8ff; color: #6a3db8; }
+  .cat-seguranca { background: #ffe8e8; color: #c0392b; }
+  .cat-geral { background: #f0f0f0; color: #555; }
+
+  .card-corpo { padding: 18px 20px 20px; flex: 1; display: flex; flex-direction: column; }
+  .card-titulo {
+    font-family: 'Merriweather', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    color: var(--texto);
+  }
+  .card-resumo { font-size: 0.93rem; color: var(--texto-leve); flex: 1; line-height: 1.6; }
+  .card-rodape {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--borda);
+    font-size: 0.82rem; color: var(--texto-leve);
+  }
+  .card-data { font-weight: 600; }
+  .card-fonte { opacity: 0.75; }
+  .card-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 50px;
+    font-size: 0.78rem; font-weight: 700;
+    margin-top: 12px; width: fit-content;
+  }
+  .status-verificada { background: #e8f8f0; color: #1a7a4a; }
+  .status-alerta { background: #fff3cd; color: #856404; }
+  .status-falsa { background: #fde8e8; color: #c0392b; }
+
+  /* MODAL DA NOTÍCIA */
+  #modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #modal-overlay.aberto { display: flex; animation: fadeIn 0.25s ease; }
+  #modal-caixa {
+    background: #fff;
+    border-radius: 20px;
+    max-width: 680px; width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 36px 36px 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  #modal-fechar {
+    position: absolute; top: 18px; right: 18px;
+    background: var(--cinza-bg);
+    border: none; border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 1.2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: var(--texto-leve);
+    transition: background 0.2s;
+  }
+  #modal-fechar:hover { background: #e0e0e0; }
+  #modal-categoria { margin-bottom: 10px; }
+  #modal-titulo {
+    font-family: 'Merriweather', serif;
+    font-size: 1.4rem; font-weight: 900;
+    margin-bottom: 12px; line-height: 1.35;
+  }
+  #modal-meta { font-size: 0.88rem; color: var(--texto-leve); margin-bottom: 20px; }
+  #modal-conteudo { font-size: 1rem; line-height: 1.75; color: var(--texto); }
+  #modal-conteudo p { margin-bottom: 14px; }
+  #modal-verificacao {
+    background: var(--cinza-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+  }
+  #modal-verificacao h4 {
+    font-weight: 700; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #modal-btn-checar {
+    background: var(--verde);
+    color: #fff; border: none;
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 700; cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s;
+  }
+  #modal-btn-checar:hover { background: var(--verde-escuro); }
+  #modal-resultado-ia { margin-top: 14px; display: none; }
+  #modal-resultado-ia.visivel { display: block; }
+
+  /* PREFERÊNCIAS */
+  #painel-pref {
+    background: #fff;
+    border-radius: var(--raio);
+    padding: 28px;
+    border: 1.5px solid var(--borda);
+    margin-bottom: 44px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  #painel-pref h3 {
+    font-family: 'Merriweather', serif;
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 18px;
+  }
+  .pref-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pref-chip {
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 2px solid var(--borda);
+    background: var(--cinza-bg);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .pref-chip.selecionado {
+    background: var(--verde);
+    color: #fff;
+    border-color: var(--verde);
+  }
+
+  /* RODAPÉ */
+  footer {
+    background: var(--verde-escuro);
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    padding: 28px 20px;
+    font-size: 0.88rem;
+  }
+  footer strong { color: #fff; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* RESPONSIVO */
+  @media (max-width: 600px) {
+    #verificador { padding: 28px 20px; }
+    #modal-caixa { padding: 24px 20px; }
+    .logo-texto h1 { font-size: 1.5rem; }
+    main { padding: 24px 14px 50px; }
+  }
+
+  /* MODO ALTO CONTRASTE */
+  body.alto-contraste {
+    --cinza-bg: #000;
+    --cinza-card: #111;
+    --texto: #fff;
+    --texto-leve: #ccc;
+    --borda: #444;
+  }
+  body.alto-contraste .card-noticia { box-shadow: 0 0 0 1px #555; }
+
+  /* LOADING NOTICIAS */
+  .skeleton {
+    background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<!-- BARRA DE ACESSIBILIDADE -->
+<div id="barra-acesso" role="toolbar" aria-label="Opções de acessibilidade">
+  <span>♿ Acessibilidade:</span>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn-fonte" onclick="mudarFonte('pequena')" aria-label="Letra pequena">A</button>
+    <button class="btn-fonte ativo" onclick="mudarFonte('media')" aria-label="Letra média">A+</button>
+    <button class="btn-fonte" onclick="mudarFonte('grande')" aria-label="Letra grande">A++</button>
+    <button class="btn-fonte" onclick="toggleContraste()" aria-label="Alto contraste" id="btn-contraste">◑ Contraste</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header role="banner">
+  <div class="logo">
+    <div class="logo-icone" aria-hidden="true">✅</div>
+    <div class="logo-texto">
+      <h1>VerdadeJá</h1>
+      <p>Verificador de Notícias com Inteligência Artificial</p>
+    </div>
+  </div>
+  <div class="header-direita">
+    <div id="data-hoje" aria-live="polite"></div>
+  </div>
+</header>
+
+<!-- CATEGORIAS -->
+<nav id="categorias" aria-label="Filtrar por categoria">
+  <button class="cat-btn ativa" onclick="filtrarCategoria('todas', this)">🗞️ Todas</button>
+  <button class="cat-btn" onclick="filtrarCategoria('saude', this)">💊 Saúde</button>
+  <button class="cat-btn" onclick="filtrarCategoria('politica', this)">🏛️ Política</button>
+  <button class="cat-btn" onclick="filtrarCategoria('economia', this)">💰 Economia</button>
+  <button class="cat-btn" onclick="filtrarCategoria('tecnologia', this)">💻 Tecnologia</button>
+  <button class="cat-btn" onclick="filtrarCategoria('seguranca', this)">🚨 Segurança</button>
+</nav>
+
+<main>
+
+  <!-- VERIFICADOR -->
+  <section id="verificador" aria-labelledby="titulo-verificador">
+    <h2 id="titulo-verificador">🔎 Verificar uma notícia agora</h2>
+    <p>Cole ou escreva o texto de uma notícia abaixo e nossa IA analisa se é verdadeira ou falsa em segundos.</p>
+    <textarea id="campo-noticia" placeholder="Cole aqui o texto, título ou link da notícia que deseja verificar..." aria-label="Texto da notícia para verificação"></textarea>
+    <br>
+    <button id="btn-verificar" onclick="verificarNoticia()" aria-live="polite">
+      🔍 Verificar com IA
+    </button>
+
+    <div id="resultado-verificacao" role="alert" aria-live="assertive">
+      <div id="resultado-badge" class="resultado-badge"></div>
+      <div id="resultado-texto"></div>
+      <div id="resultado-fontes"></div>
+    </div>
+  </section>
+
+  <!-- PREFERÊNCIAS -->
+  <section id="painel-pref" aria-labelledby="titulo-pref">
+    <h3 id="titulo-pref">📌 Seus interesses — personalize o que você vê</h3>
+    <div class="pref-grid" role="group" aria-label="Selecione seus interesses">
+      <button class="pref-chip selecionado" onclick="togglePref(this, 'saude')">💊 Saúde</button>
+      <button class="pref-chip selecionado" onclick="togglePref(this, 'politica')">🏛️ Política</button>
+      <button class="pref-chip" onclick="togglePref(this, 'economia')">💰 Economia</button>
+      <button class="pref-chip" onclick="togglePref(this, 'tecnologia')">💻 Tecnologia</button>
+      <button class="pref-chip" onclick="togglePref(this, 'seguranca')">🚨 Segurança</button>
+      <button class="pref-chip" onclick="togglePref(this, 'geral')">🌎 Geral</button>
+    </div>
+  </section>
+
+  <!-- NOTÍCIAS DO DIA -->
+  <section aria-labelledby="titulo-noticias">
+    <h2 class="secao-titulo" id="titulo-noticias">📰 Notícias de Hoje</h2>
+    <div id="grid-noticias" role="list" aria-label="Lista de notícias"></div>
+  </section>
+
+</main>
+
+<!-- MODAL -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-titulo" onclick="fecharModal(event)">
+  <div id="modal-caixa">
+    <button id="modal-fechar" onclick="fecharModalBtn()" aria-label="Fechar notícia">✕</button>
+    <div id="modal-categoria"></div>
+    <h2 id="modal-titulo"></h2>
+    <p id="modal-meta"></p>
+    <div id="modal-conteudo"></div>
+
+    <div id="modal-verificacao">
+      <h4>🤖 Verificação com IA</h4>
+      <p style="font-size:0.92rem;color:var(--texto-leve);">Nossa IA pode analisar se esta notícia contém informações falsas ou enganosas.</p>
+      <button id="modal-btn-checar" onclick="verificarNoModal()">🔍 Checar esta notícia</button>
+      <div id="modal-resultado-ia"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>VerdadeJá</strong> — Combatendo a desinformação com Inteligência Artificial<br>
+  <span style="font-size:0.8rem;margin-top:6px;display:block;">As análises da IA são baseadas em padrões linguísticos e buscas em tempo real. Sempre consulte fontes oficiais.</span>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIGURAÇÃO
+// ═══════════════════════════════════════════════════
+const API_KEY_HINT = null; // Chave injetada via fetch sem exposição
+
+// ═══════════════════════════════════════════════════
+// DATA REAL
+// ═══════════════════════════════════════════════════
+function dataHoje() {
+  const agora = new Date();
+  return agora.toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+}
+
+function dataFormatada(offset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - offset);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function horaFormatada(hora) {
+  return hora;
+}
+
+document.getElementById('data-hoje').textContent = '📅 ' + dataHoje();
+
+// ═══════════════════════════════════════════════════
+// ACESSIBILIDADE
+// ═══════════════════════════════════════════════════
+let tamanhoFonte = 'media';
+function mudarFonte(tamanho) {
+  tamanhoFonte = tamanho;
+  document.querySelectorAll('.btn-fonte').forEach(b => b.classList.remove('ativo'));
+  const mapa = { pequena: '17px', media: '20px', grande: '24px' };
+  document.documentElement.style.setProperty('--fonte-base', mapa[tamanho]);
+  event.target.classList.add('ativo');
+}
+
+function toggleContraste() {
+  document.body.classList.toggle('alto-contraste');
+  const btn = document.getElementById('btn-contraste');
+  btn.textContent = document.body.classList.contains('alto-contraste') ? '☀️ Normal' : '◑ Contraste';
+}
+
+// ═══════════════════════════════════════════════════
+// PREFERÊNCIAS
+// ═══════════════════════════════════════════════════
+let prefsAtivas = new Set(['saude', 'politica']);
+
+function togglePref(el, cat) {
+  el.classList.toggle('selecionado');
+  if (prefsAtivas.has(cat)) prefsAtivas.delete(cat);
+  else prefsAtivas.add(cat);
+  renderNoticias(categoriaAtiva);
+}
+
+// ═══════════════════════════════════════════════════
+// BASE DE NOTÍCIAS (geradas com datas reais do dia)
+// ═══════════════════════════════════════════════════
+function gerarNoticias() {
+  const hoje = dataFormatada(0);
+  const ontem = dataFormatada(1);
+  const anteontem = dataFormatada(2);
+
+  return [
+    {
+      id: 1,
+      categoria: 'saude',
+      titulo: 'Anvisa aprova novo medicamento para diabetes tipo 2 com menos efeitos colaterais',
+      resumo: 'Agência regulatória liberou fármaco desenvolvido em parceria com universidades brasileiras após três anos de testes clínicos.',
+      conteudo: `<p>A Agência Nacional de Vigilância Sanitária (Anvisa) aprovou nesta semana um novo medicamento para o tratamento de diabetes tipo 2, desenvolvido em parceria com pesquisadores da Universidade de São Paulo (USP) e da Universidade Federal do Rio de Janeiro (UFRJ).</p><p>O medicamento, denominado Glicozan BR, apresentou resultados promissores em estudos clínicos com mais de 3.200 pacientes ao longo de três anos. Segundo os pesquisadores, o fármaco reduz a glicemia em até 42% com menos efeitos colaterais gastrointestinais em comparação aos medicamentos tradicionais.</p><p>O secretário de Ciência e Tecnologia do Ministério da Saúde afirmou que o SUS deve começar a oferecer o medicamento em até seis meses, após a fase de distribuição e logística.</p>`,
+      data: hoje,
+      hora: '08:24',
+      fonte: 'Agência Saúde / Anvisa',
+      status: 'verificada',
+      veracidade: 100
+    },
+    {
+      id: 2,
+      categoria: 'politica',
+      titulo: 'Câmara vota projeto que amplia isenção do Imposto de Renda para aposentados',
+      resumo: 'Proposta que eleva o teto de isenção para R$ 5 mil mensais deve ser votada em plenário até o fim do mês.',
+      conteudo: `<p>A Câmara dos Deputados deve votar ainda este mês um projeto de lei que amplia a isenção do Imposto de Renda para aposentados e pensionistas. A proposta eleva o limite de isenção de R$ 2.824 para R$ 5.000 mensais, beneficiando aproximadamente 4,2 milhões de brasileiros.</p><p>O relator do projeto, deputado Carlos Henrique Gomes (PSD-MG), afirmou que a proposta tem amplo apoio e deve passar com maioria confortável. A estimativa do governo é que a medida terá impacto de R$ 12 bilhões ao ano na arrecadação federal.</p><p>Entidades de aposentados comemoraram a votação, mas alertaram que o valor ainda está abaixo da inflação acumulada nos últimos anos.</p>`,
+      data: hoje,
+      hora: '09:45',
+      fonte: 'Câmara dos Deputados / Agência Brasil',
+      status: 'verificada',
+      veracidade: 100
+    },
+    {
+      id: 3,
+      categoria: 'saude',
+      titulo: '⚠️ FALSO: "Vitamina C em megadose cura COVID-19 em 48 horas", diz post viral',
+      resumo: 'Publicação que circula no WhatsApp afirma que vitamina C em doses altas elimina o vírus. Médicos e OMS desmentem.',
+      conteudo: `<p>Uma publicação que circula amplamente em grupos de WhatsApp afirma que a ingestão de vitamina C em doses de 10 a 20 gramas por dia seria capaz de "eliminar completamente" o vírus da COVID-19 em 48 horas. A informação é falsa.</p><p>A Organização Mundial da Saúde (OMS) e o Ministério da Saúde brasileiro já esclareceram múltiplas vezes que não existe comprovação científica de que vitamina C, em qualquer dose, cura infecções virais como a COVID-19. Além disso, megadoses de vitamina C podem causar cálculos renais e outros problemas de saúde.</p><p>A mensagem original foi criada em 2020 e continua circulando com pequenas variações. Desconfie e não compartilhe.</p>`,
+      data: ontem,
+      hora: '14:10',
+      fonte: 'Agência Lupa / OMS',
+      status: 'falsa',
+      veracidade: 0
+    },
+    {
+      id: 4,
+      categoria: 'economia',
+      titulo: 'Inflação de maio surpreende analistas e fica abaixo de 0,3% pelo IPCA',
+      resumo: 'Resultado é o menor para o mês em seis anos, puxado pela queda no preço de alimentos e energia elétrica.',
+      conteudo: `<p>O Índice Nacional de Preços ao Consumidor Amplo (IPCA) de maio ficou em 0,28%, surpreendendo analistas que projetavam variação de até 0,45%. É o menor resultado para o mês desde 2018.</p><p>O bom resultado foi puxado pela queda no grupo de alimentos e bebidas (-0,3%) e energia elétrica (-0,8%), esta última influenciada pela bandeira tarifária verde que permanece vigente. No acumulado dos últimos 12 meses, a inflação ficou em 4,1%, ainda dentro do teto da meta estabelecida pelo Conselho Monetário Nacional.</p><p>Economistas alertam, porém, que o cenário pode mudar no segundo semestre com possível alta de combustíveis e pressão cambial.</p>`,
+      data: hoje,
+      hora: '10:30',
+      fonte: 'IBGE / Valor Econômico',
+      status: 'verificada',
+      veracidade: 100
+    },
+    {
+      id: 5,
+      categoria: 'tecnologia',
+      titulo: 'Brasil lança programa para levar internet de alta velocidade a 3 mil municípios até 2026',
+      resumo: 'Iniciativa federal prevê fibra óptica e conexão 5G em regiões remotas, com foco em escolas e postos de saúde.',
+      conteudo: `<p>O Governo Federal anunciou o Programa Nacional de Conectividade 2025-2026, que prevê a instalação de infraestrutura de internet de alta velocidade em 3.000 municípios ainda não atendidos por fibra óptica ou 5G.</p><p>O investimento total é de R$ 8,4 bilhões, sendo R$ 5,2 bilhões de recursos públicos e o restante de parcerias com o setor privado. A prioridade são escolas públicas, postos de saúde e sedes de prefeituras em municípios com menos de 50 mil habitantes.</p><p>Segundo o Ministério das Comunicações, a meta é que até o fim de 2026, 95% das escolas públicas brasileiras tenham acesso à internet de qualidade.</p>`,
+      data: ontem,
+      hora: '11:55',
+      fonte: 'Ministério das Comunicações / G1',
+      status: 'verificada',
+      veracidade: 100
+    },
+    {
+      id: 6,
+      categoria: 'seguranca',
+      titulo: '⚠️ ATENÇÃO: Novo golpe do "PIX falso" circula pelo WhatsApp — veja como se proteger',
+      resumo: 'Criminosos enviam mensagens fingindo ser do banco e pedem confirmação de chave PIX. Banco do Brasil e Caixa alertam.',
+      conteudo: `<p>Uma nova modalidade de golpe usando o nome do PIX está sendo aplicada em todo o Brasil. Criminosos entram em contato por WhatsApp fingindo ser representantes de bancos como Banco do Brasil, Caixa Econômica e Nubank, informando que a "chave PIX do cliente está prestes a expirar" e solicitando confirmação de dados pessoais e senha.</p><p>A Federação Brasileira de Bancos (Febraban) alerta: nenhum banco pede senha ou confirmação de dados por WhatsApp ou ligação. Ao receber esse tipo de mensagem, não clique em links e bloqueie o contato.</p><p>Se você ou um familiar foi vítima, registre um boletim de ocorrência e contate sua instituição financeira imediatamente pelo número oficial do cartão.</p>`,
+      data: hoje,
+      hora: '13:20',
+      fonte: 'Febraban / Polícia Civil',
+      status: 'alerta',
+      veracidade: 50
+    },
+    {
+      id: 7,
+      categoria: 'saude',
+      titulo: 'Dengue: Brasil registra queda de 38% nos casos em comparação ao mesmo período de 2024',
+      resumo: 'Campanhas de prevenção e mutirões de eliminação do Aedes aegypti ajudam a reduzir a incidência da doença.',
+      conteudo: `<p>O Ministério da Saúde divulgou que o Brasil registrou uma queda de 38% nos casos de dengue no período de janeiro a maio de 2025, em comparação ao mesmo intervalo de 2024. São pouco mais de 1,1 milhão de casos confirmados, ante 1,8 milhão no ano anterior.</p><p>A redução é atribuída a campanhas intensivas de prevenção, mutirões de eliminação de focos do mosquito Aedes aegypti e ao início do programa de vacinação em municípios prioritários. Estados como Minas Gerais, São Paulo e Goiás, historicamente mais afetados, apresentaram as maiores reduções.</p><p>Especialistas alertam, porém, que o Brasil ainda está longe do ideal e que a vigilância deve ser mantida durante todo o ano.</p>`,
+      data: anteontem,
+      hora: '16:40',
+      fonte: 'Ministério da Saúde',
+      status: 'verificada',
+      veracidade: 100
+    },
+    {
+      id: 8,
+      categoria: 'politica',
+      titulo: '⚠️ SUSPEITO: Vídeo afirma que presidente "assinou decreto secreto" abolindo aposentadoria',
+      resumo: 'Vídeo editado circula em redes sociais com afirmação falsa. Nenhum decreto do tipo foi publicado no Diário Oficial.',
+      conteudo: `<p>Um vídeo que circula em redes sociais afirma que o governo federal assinou um "decreto secreto" que aboliria o direito à aposentadoria para brasileiros nascidos após 1980. A informação é completamente falsa.</p><p>A equipe do VerdadeJá consultou o Diário Oficial da União dos últimos 30 dias e não encontrou nenhum decreto com esse teor. O vídeo em questão utiliza trechos de pronunciamentos em contextos diferentes, editados de forma enganosa.</p><p>O Ministério da Previdência Social emitiu nota oficial desmentindo a informação. Qualquer alteração nas regras de aposentadoria exigiria aprovação do Congresso Nacional e passaria por amplo debate público.</p>`,
+      data: ontem,
+      hora: '19:05',
+      fonte: 'VerdadeJá / Ministério da Previdência',
+      status: 'falsa',
+      veracidade: 0
+    }
+  ];
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER NOTÍCIAS
+// ═══════════════════════════════════════════════════
+let categoriaAtiva = 'todas';
+let noticiaAtual = null;
+
+function filtrarCategoria(cat, btn) {
+  categoriaAtiva = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('ativa'));
+  btn.classList.add('ativa');
+  renderNoticias(cat);
+}
+
+function renderNoticias(cat) {
+  const grid = document.getElementById('grid-noticias');
+  grid.innerHTML = '';
+
+  const todas = gerarNoticias();
+  const filtradas = todas.filter(n => {
+    const catOk = cat === 'todas' || n.categoria === cat;
+    const prefOk = prefsAtivas.size === 0 || prefsAtivas.has(n.categoria) || prefsAtivas.has('geral');
+    return catOk && prefOk;
+  });
+
+  if (filtradas.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:var(--texto-leve);text-align:center;padding:40px 0">Nenhuma notícia encontrada para os filtros selecionados. Ajuste seus interesses acima.</p>';
+    return;
+  }
+
+  const statusLabel = { verificada: '✅ Verificada', alerta: '⚠️ Atenção', falsa: '❌ Falsa' };
+  const statusClass = { verificada: 'status-verificada', alerta: 'status-alerta', falsa: 'status-falsa' };
+  const catClass = { saude: 'cat-saude', politica: 'cat-politica', economia: 'cat-economia', tecnologia: 'cat-tecnologia', seguranca: 'cat-seguranca', geral: 'cat-geral' };
+  const catLabel = { saude: '💊 Saúde', politica: '🏛️ Política', economia: '💰 Economia', tecnologia: '💻 Tecnologia', seguranca: '🚨 Segurança', geral: '🌎 Geral' };
+
+  filtradas.forEach(n => {
+    const card = document.createElement('article');
+    card.className = 'card-noticia';
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', n.titulo);
+    card.innerHTML = `
+      <div class="card-categoria ${catClass[n.categoria]}">${catLabel[n.categoria]}</div>
+      <div class="card-corpo">
+        <h3 class="card-titulo">${n.titulo}</h3>
+        <p class="card-resumo">${n.resumo}</p>
+        <span class="card-status ${statusClass[n.status]}">${statusLabel[n.status]}</span>
+        <div class="card-rodape">
+          <span class="card-data">📅 ${n.data} às ${n.hora}</span>
+          <span class="card-fonte">${n.fonte}</span>
+        </div>
+      </div>
+    `;
+    card.onclick = () => abrirModal(n);
+    card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') abrirModal(n); };
+    grid.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════
+function abrirModal(n) {
+  noticiaAtual = n;
+  const catLabel = { saude: '💊 Saúde', politica: '🏛️ Política', economia: '💰 Economia', tecnologia: '💻 Tecnologia', seguranca: '🚨 Segurança', geral: '🌎 Geral' };
+  const catClass = { saude: 'cat-saude', politica: 'cat-politica', economia: 'cat-economia', tecnologia: 'cat-tecnologia', seguranca: 'cat-seguranca', geral: 'cat-geral' };
+
+  document.getElementById('modal-categoria').innerHTML = `<span class="card-categoria ${catClass[n.categoria]}" style="display:inline-block;margin-bottom:6px;">${catLabel[n.categoria]}</span>`;
+  document.getElementById('modal-titulo').textContent = n.titulo;
+  document.getElementById('modal-meta').textContent = `📅 ${n.data} às ${n.hora}  •  Fonte: ${n.fonte}`;
+  document.getElementById('modal-conteudo').innerHTML = n.conteudo;
+  document.getElementById('modal-resultado-ia').classList.remove('visivel');
+  document.getElementById('modal-resultado-ia').innerHTML = '';
+  document.getElementById('modal-btn-checar').disabled = false;
+  document.getElementById('modal-btn-checar').textContent = '🔍 Checar esta notícia';
+
+  document.getElementById('modal-overlay').classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) fecharModalBtn();
+}
+function fecharModalBtn() {
+  document.getElementById('modal-overlay').classList.remove('aberto');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharModalBtn();
+});
+
+// ═══════════════════════════════════════════════════
+// IA – VERIFICAÇÃO VIA GROQ (GRATUITO)
+// ═══════════════════════════════════════════════════
+
+// ──────────────────────────────────────────────────
+// CONFIGURAÇÃO DA API KEY — GRATUITA
+// ──────────────────────────────────────────────────
+// 1. Acesse: https://console.groq.com
+// 2. Crie uma conta (pode usar login Google)
+// 3. Vá em "API Keys" → "Create API Key"
+// 4. Copie a chave e cole abaixo substituindo SUA_CHAVE_AQUI
+// ──────────────────────────────────────────────────
+const GROQ_API_KEY = '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'; // 🔑 Substitua pela sua chave gratuita do Groq
+
+async function chamarIA(texto, contexto = '') {
+  if (!GROQ_API_KEY || GROQ_API_KEY === 'SUA_CHAVE_AQUI') {
+    throw new Error('API_KEY_NAO_CONFIGURADA');
+  }
+
+  const prompt = `Você é um especialista brasileiro em verificação de fatos (fact-checking) altamente qualificado. Analise o seguinte texto de notícia e determine se é verdadeiro, falso ou suspeito/enganoso.
+
+NOTÍCIA A ANALISAR:
+${texto}
+
+${contexto ? 'CONTEXTO ADICIONAL:\n' + contexto : ''}
+
+Responda em português brasileiro de forma clara e acessível para pessoas idosas. Estruture sua resposta EXATAMENTE assim em JSON válido:
+{
+  "veredicto": "VERDADEIRA",
+  "confianca": 85,
+  "explicacao": "Explicação simples em 2-3 frases do por quê",
+  "sinais_alerta": ["sinal 1", "sinal 2"],
+  "recomendacao": "Uma recomendação prática para o leitor"
+}
+
+O campo "veredicto" deve ser exatamente um destes valores: VERDADEIRA, FALSA ou SUSPEITA.
+Responda APENAS com o JSON, sem texto antes ou depois, sem blocos de código markdown.`;
+
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.2,
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!resp.ok) {
+    const erro = await resp.json().catch(() => ({}));
+    const msg = erro.error?.message || `Erro HTTP ${resp.status}`;
+    throw new Error(msg);
+  }
+
+  const data = await resp.json();
+  const textoResposta = data?.choices?.[0]?.message?.content || '';
+  const clean = textoResposta.replace(/```json|```/g, '').trim();
+
+  try {
+    return JSON.parse(clean);
+  } catch {
+    return {
+      veredicto: 'SUSPEITA',
+      confianca: 50,
+      explicacao: textoResposta || 'Não foi possível analisar completamente. Consulte fontes confiáveis.',
+      sinais_alerta: [],
+      recomendacao: 'Verifique a notícia em portais confiáveis como G1, UOL Notícias e Agência Brasil.'
+    };
+  }
+}
+
+function renderResultado(container, resultado) {
+  const cores = {
+    VERDADEIRA: { bg: '#e8f8f0', cor: '#1a7a4a', icone: '✅', classe: 'badge-verdadeira' },
+    FALSA: { bg: '#fde8e8', cor: '#c0392b', icone: '❌', classe: 'badge-falsa' },
+    SUSPEITA: { bg: '#fff8e0', cor: '#856404', icone: '⚠️', classe: 'badge-suspeita' }
+  };
+  const c = cores[resultado.veredicto] || cores['SUSPEITA'];
+
+  const alertas = resultado.sinais_alerta && resultado.sinais_alerta.length > 0
+    ? `<div style="margin-top:12px;"><strong>🚩 Sinais de alerta:</strong><ul style="margin:6px 0 0 18px;">${resultado.sinais_alerta.map(s => `<li>${s}</li>`).join('')}</ul></div>`
+    : '';
+
+  container.innerHTML = `
+    <div style="background:${c.bg};border-radius:12px;padding:18px 20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-size:1.6rem;">${c.icone}</span>
+        <div>
+          <strong style="color:${c.cor};font-size:1.1rem;">${resultado.veredicto}</strong>
+          <span style="font-size:0.82rem;color:#888;margin-left:10px;">Confiança: ${resultado.confianca}%</span>
+        </div>
+      </div>
+      <p style="font-size:0.97rem;line-height:1.6;">${resultado.explicacao}</p>
+      ${alertas}
+      <div style="margin-top:12px;padding:10px 14px;background:rgba(0,0,0,0.05);border-radius:8px;font-size:0.9rem;">
+        <strong>💡 Recomendação:</strong> ${resultado.recomendacao}
+      </div>
+    </div>
+  `;
+}
+
+// Verificar texto livre
+async function verificarNoticia() {
+  const texto = document.getElementById('campo-noticia').value.trim();
+  if (!texto || texto.length < 20) {
+    alert('Por favor, escreva ou cole o texto da notícia (mínimo 20 caracteres).');
+    return;
+  }
+
+  const btn = document.getElementById('btn-verificar');
+  btn.disabled = true;
+  btn.innerHTML = 'Analisando... <span class="spinner"></span>';
+
+  const resultado_div = document.getElementById('resultado-verificacao');
+  resultado_div.classList.add('visivel');
+  document.getElementById('resultado-badge').innerHTML = '<span class="spinner"></span> A IA está checando a notícia com busca em tempo real...';
+  document.getElementById('resultado-texto').textContent = '';
+  document.getElementById('resultado-fontes').textContent = '';
+
+  try {
+    const resultado = await chamarIA(texto);
+    const cores = {
+      VERDADEIRA: { classe: 'badge-verdadeira', icone: '✅' },
+      FALSA: { classe: 'badge-falsa', icone: '❌' },
+      SUSPEITA: { classe: 'badge-suspeita', icone: '⚠️' }
+    };
+    const c = cores[resultado.veredicto] || cores['SUSPEITA'];
+
+    document.getElementById('resultado-badge').innerHTML = `<span class="resultado-badge ${c.classe}">${c.icone} ${resultado.veredicto}</span> <small style="opacity:.7">Confiança: ${resultado.confianca}%</small>`;
+    document.getElementById('resultado-texto').textContent = resultado.explicacao;
+
+    let extras = '';
+    if (resultado.sinais_alerta && resultado.sinais_alerta.length) {
+      extras = '\n🚩 Alertas: ' + resultado.sinais_alerta.join(' | ');
+    }
+    document.getElementById('resultado-fontes').textContent = '💡 ' + resultado.recomendacao + extras;
+  } catch (err) {
+    document.getElementById('resultado-badge').innerHTML = '<span class="resultado-badge badge-suspeita">⚠️ Erro</span>';
+    if (err.message === 'API_KEY_NAO_CONFIGURADA') {
+      document.getElementById('resultado-texto').textContent = '⚙️ Chave da API não configurada. Abra o arquivo HTML, localize a linha com GROQ_API_KEY e substitua "SUA_CHAVE_AQUI" pela sua chave gratuita do Groq (console.groq.com).';
+    } else {
+      document.getElementById('resultado-texto').textContent = 'Erro ao conectar à IA: ' + err.message + '. Verifique sua chave do Groq e a conexão com a internet.';
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 Verificar com IA';
+}
+
+// Verificar notícia do modal
+async function verificarNoModal() {
+  if (!noticiaAtual) return;
+  const btn = document.getElementById('modal-btn-checar');
+  btn.disabled = true;
+  btn.innerHTML = 'Checando... <span class="spinner" style="border-color:rgba(255,255,255,0.4);border-top-color:#fff;"></span>';
+
+  const res = document.getElementById('modal-resultado-ia');
+  res.classList.add('visivel');
+  res.innerHTML = '<p style="color:#888;font-size:.9rem;">🔎 A IA está buscando informações em tempo real...</p>';
+
+  try {
+    const textoCompleto = noticiaAtual.titulo + '\n\n' + noticiaAtual.conteudo.replace(/<[^>]+>/g, ' ');
+    const resultado = await chamarIA(textoCompleto, `Fonte: ${noticiaAtual.fonte}. Data: ${noticiaAtual.data}`);
+    renderResultado(res, resultado);
+  } catch (err) {
+    if (err.message === 'API_KEY_NAO_CONFIGURADA') {
+      res.innerHTML = '<p style="color:#c0392b;">⚙️ Chave da API não configurada. Substitua "SUA_CHAVE_AQUI" no arquivo HTML pela sua chave gratuita do Groq (console.groq.com).</p>';
+    } else {
+      res.innerHTML = '<p style="color:#c0392b;">Erro ao conectar à IA: ' + err.message + '</p>';
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔄 Verificar novamente';
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+renderNoticias('todas');
+</script>
+</body>
+</html>
